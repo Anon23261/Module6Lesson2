@@ -75,9 +75,17 @@ def update_member(id):
     email = request.json['email']
     phone = request.json['phone']
     
-    query = """UPDATE Members SET name = %s, email = %s, phone = %s WHERE id = %s"""
+    # Check if the member exists
+    select_query = """SELECT id FROM Members WHERE id = %s"""
+    cursor.execute(select_query, (id,))
+    member = cursor.fetchone()
+    if not member:
+        return jsonify({'error': 'Member not found'}), 404
+
+    # Update member details
+    update_query = """UPDATE Members SET name = %s, email = %s, phone = %s WHERE id = %s"""
     try:
-        cursor.execute(query, (name, email, phone, id))
+        cursor.execute(update_query, (name, email, phone, id))
         db.commit()
         return jsonify({'message': 'Member updated successfully'})
     except mysql.connector.Error as err:
@@ -85,9 +93,17 @@ def update_member(id):
 
 @app.route('/members/<int:id>', methods=['DELETE'])
 def delete_member(id):
-    query = """DELETE FROM Members WHERE id = %s"""
+    # Check if the member exists
+    select_query = """SELECT id FROM Members WHERE id = %s"""
+    cursor.execute(select_query, (id,))
+    member = cursor.fetchone()
+    if not member:
+        return jsonify({'error': 'Member not found'}), 404
+
+    # Delete member
+    delete_query = """DELETE FROM Members WHERE id = %s"""
     try:
-        cursor.execute(query, (id,))
+        cursor.execute(delete_query, (id,))
         db.commit()
         return jsonify({'message': 'Member deleted successfully'})
     except mysql.connector.Error as err:
@@ -122,3 +138,7 @@ def get_member_workouts(member_id):
     cursor.execute(query, (member_id,))
     sessions = cursor.fetchall()
     return workout_sessions_schema.jsonify(sessions)
+
+# Run the Flask app
+if __name__ == '__main__':
+    app.run(debug=True)
